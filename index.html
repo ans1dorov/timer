@@ -5,15 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>GTA VI Countdown</title>
 
-  <meta property="og:title" content="GTA VI — Обратный отсчет">
-  <meta property="og:description" content="Следите за временем до релиза в разных регионах в реальном времени.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://ans1dorov.github.io/timer/">
-  <meta property="og:image" content="https://ans1dorov.github.io/timer/preview.jpg">
-  <meta name="twitter:card" content="summary_large_image">
-
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
   <style>
     * {
       box-sizing: border-box;
@@ -58,16 +49,13 @@
       background: rgba(255, 255, 255, 0.08);
       color: #c0a7d9;
       border: 1px solid rgba(226, 73, 157, 0.3);
-      padding: 10px 16px;
+      padding: 8px 14px;
       border-radius: 20px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       user-select: none;
       transition: all 0.2s ease;
-    }
-    .region-btn:hover {
-      background: rgba(255, 255, 255, 0.15);
     }
     .region-btn.active {
       background: #e2499d;
@@ -84,31 +72,49 @@
       box-shadow: 0 0 25px rgba(226, 73, 157, 0.35);
       background: rgba(255, 255, 255, 0.03);
     }
-    .timer-values {
+
+    /* Блок таймера со строгим позиционированием */
+    .timer-grid {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 4px;
+    }
+    .timer-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 68px;
+    }
+    .timer-num {
       font-size: 38px;
       font-weight: 800;
-      letter-spacing: 2px;
-      font-variant-numeric: tabular-nums;
-      margin-bottom: 8px;
-    }
-    .timer-labels {
-      display: flex;
-      justify-content: space-around;
-      font-size: 11px;
       letter-spacing: 1px;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .timer-label {
+      font-size: 10px;
+      letter-spacing: 0.8px;
       color: #c0a7d9;
       text-transform: uppercase;
       font-weight: 600;
-      padding: 0 4px;
     }
-    .timer-labels span {
-      width: 25%;
+    .timer-sep {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      color: #ffffff;
+      opacity: 0.85;
+      padding-top: 2px;
     }
+
     .release-info {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #ff8ad8;
-      margin-top: 14px;
+      margin-top: 16px;
       letter-spacing: 0.3px;
     }
     .title {
@@ -128,21 +134,35 @@
 
   <div class="badge">Grand Theft Auto VI — Countdown</div>
 
-  <div class="region-selector" id="regionSelector">
-    <button type="button" class="region-btn active" data-region="nz">🇳🇿 Новая Зеландия</button>
-    <button type="button" class="region-btn" data-region="in">🇮🇳 Индия</button>
-    <button type="button" class="region-btn" data-region="tr">🇹🇷 Турция</button>
-    <button type="button" class="region-btn" data-region="pl">🇵🇱 Польша</button>
-    <button type="button" class="region-btn" data-region="us">🇺🇸 США</button>
+  <div class="region-selector">
+    <button type="button" class="region-btn active" onclick="changeRegion('nz', this)">🇳🇿 Новая Зеландия</button>
+    <button type="button" class="region-btn" onclick="changeRegion('in', this)">🇮🇳 Индия</button>
+    <button type="button" class="region-btn" onclick="changeRegion('tr', this)">🇹🇷 Турция</button>
+    <button type="button" class="region-btn" onclick="changeRegion('pl', this)">🇵🇱 Польша</button>
+    <button type="button" class="region-btn" onclick="changeRegion('us', this)">🇺🇸 США</button>
   </div>
 
   <div class="timer-card">
-    <div class="timer-values" id="countdown">00:00:00:00</div>
-    <div class="timer-labels">
-      <span>Дней</span>
-      <span>Часов</span>
-      <span>Минут</span>
-      <span>Секунд</span>
+    <div class="timer-grid">
+      <div class="timer-col">
+        <div class="timer-num" id="days">00</div>
+        <div class="timer-label">Дней</div>
+      </div>
+      <div class="timer-sep">:</div>
+      <div class="timer-col">
+        <div class="timer-num" id="hours">00</div>
+        <div class="timer-label">Часов</div>
+      </div>
+      <div class="timer-sep">:</div>
+      <div class="timer-col">
+        <div class="timer-num" id="minutes">00</div>
+        <div class="timer-label">Минут</div>
+      </div>
+      <div class="timer-sep">:</div>
+      <div class="timer-col">
+        <div class="timer-num" id="seconds">00</div>
+        <div class="timer-label">Секунд</div>
+      </div>
     </div>
     <div class="release-info" id="releaseInfo">Релиз: 18 ноября в 14:00 (МСК)</div>
   </div>
@@ -153,79 +173,75 @@
   </p>
 
   <script>
-    try {
-      if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
-      }
-    } catch (e) {}
-
-    // Время переведено в чистый UTC (минус 3 часа от московского времени):
-    // Месяц ноябрь = 10 (индексация 0-11)
-    const REGIONS = {
+    var REGIONS = {
       nz: {
-        target: Date.UTC(2026, 10, 18, 11, 0, 0), // 14:00 МСК -> 11:00 UTC
+        target: 1795009200000, // 2026-11-18 11:00 UTC (14:00 МСК)
         info: "Релиз: 18 ноября в 14:00 (МСК)"
       },
       in: {
-        target: Date.UTC(2026, 10, 18, 18, 30, 0), // 21:30 МСК -> 18:30 UTC
+        target: 1795036200000, // 2026-11-18 18:30 UTC (21:30 МСК)
         info: "Релиз: 18 ноября в 21:30 (МСК)"
       },
       tr: {
-        target: Date.UTC(2026, 10, 18, 21, 0, 0), // 19 ноября 00:00 МСК -> 21:00 UTC
+        target: 1795045200000, // 2026-11-18 21:00 UTC (19 ноя 00:00 МСК)
         info: "Релиз: 19 ноября в 00:00 (МСК)"
       },
       pl: {
-        target: Date.UTC(2026, 10, 18, 23, 0, 0), // 19 ноября 02:00 МСК -> 23:00 UTC
+        target: 1795052400000, // 2026-11-18 23:00 UTC (19 ноя 02:00 МСК)
         info: "Релиз: 19 ноября в 02:00 (МСК)"
       },
       us: {
-        target: Date.UTC(2026, 10, 19, 5, 0, 0),  // 19 ноября 08:00 МСК -> 05:00 UTC
+        target: 1795074000000, // 2026-11-19 05:00 UTC (19 ноя 08:00 МСК)
         info: "Релиз: 19 ноября в 08:00 (МСК)"
       }
     };
 
-    let currentRegion = 'nz';
+    var currentTarget = REGIONS.nz.target;
 
-    function updateTimer() {
-      const countdownEl = document.getElementById("countdown");
-      if (!countdownEl) return;
+    function changeRegion(code, btnElement) {
+      if (!REGIONS[code]) return;
+      currentTarget = REGIONS[code].target;
 
-      const now = Date.now();
-      const difference = REGIONS[currentRegion].target - now;
+      var buttons = document.querySelectorAll('.region-btn');
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove('active');
+      }
+      btnElement.classList.add('active');
 
-      if (difference <= 0) {
-        countdownEl.innerText = "00:00:00:00";
+      document.getElementById('releaseInfo').innerText = REGIONS[code].info;
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      var diff = currentTarget - Date.now();
+
+      var daysEl = document.getElementById("days");
+      var hoursEl = document.getElementById("hours");
+      var minutesEl = document.getElementById("minutes");
+      var secondsEl = document.getElementById("seconds");
+
+      if (diff <= 0) {
+        daysEl.innerText = "00";
+        hoursEl.innerText = "00";
+        minutesEl.innerText = "00";
+        secondsEl.innerText = "00";
         return;
       }
 
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+      var d = Math.floor(diff / 86400000);
+      var h = Math.floor((diff % 86400000) / 3600000);
+      var m = Math.floor((diff % 3600000) / 60000);
+      var s = Math.floor((diff % 60000) / 1000);
 
-      const pad = (n) => String(n).padStart(2, "0");
-      countdownEl.innerText = `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+      var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+      daysEl.innerText = pad(d);
+      hoursEl.innerText = pad(h);
+      minutesEl.innerText = pad(m);
+      secondsEl.innerText = pad(s);
     }
 
-    // Слушатели кликов по кнопкам через data-region
-    document.querySelectorAll('.region-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const region = this.getAttribute('data-region');
-        if (!region || !REGIONS[region]) return;
-
-        currentRegion = region;
-
-        document.querySelectorAll('.region-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-
-        document.getElementById('releaseInfo').innerText = REGIONS[region].info;
-        updateTimer();
-      });
-    });
-
-    updateTimer();
-    setInterval(updateTimer, 1000);
+    updateDisplay();
+    setInterval(updateDisplay, 1000);
   </script>
 </body>
 </html>
