@@ -122,8 +122,8 @@
   }
 
   // Задаем дату через явные аргументы (Год, Месяц [0-11], День, Часы, Минуты, Секунды)
-  // Обратите внимание: декабрь — это 11-й месяц
-  const targetDate = new Date(2026, 10, 19, 8, 00, 00).getTime();
+  // Обратите внимание: декабрь — это 11-й месяц было 2026, 10, 19, 8, 00, 00
+  const targetDate = new Date(2026, 10, 18, 21, 30, 00).getTime();
 
   function updateTimer() {
     const countdownEl = document.getElementById("countdown");
